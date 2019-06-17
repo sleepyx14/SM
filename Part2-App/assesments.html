@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+	</head>
+	<body>
+		<div class="container">
+			<div class="jumbotron" style="margin-top: 1em;">
+				<h2>Assesment Results</h2>
+				<p>Below are the results from your most recent assemnet</p>
+			</div>
+			<table id="scoreID" class="table table-bordered">
+				<thead>
+				<tr>
+					<th>Area of Interest</th>
+					<th>Question</th>
+					<th>Score</th>
+				</tr>
+				</thead>
+				<tbody>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="container">
+			<div class="jumbotron" style="margin-top: 1em;">
+					<h2>Assesment</h2>
+					<p>Please respond to all of the questions with a score of 1 to 5</p>
+				</div>
+				<!-- Used below button to autofill all radiobuttons -->
+				<!-- <button type="button" id="testbtn" class="btn btn-dark">Submit</button> -->
+				<table id="assemnetTbl" class="table table-bordered">
+					<thead>
+					<tr>
+						<th>Area of Interest</th>
+						<th>Question</th>
+						<th>Score</th>
+					</tr>
+					</thead>
+					<tbody>
+					</tbody>
+				</table>
+
+				<button type="button" id="submitbtn" class="btn btn-dark" style="display:none;">Submit</button>
+		</div>
+
+		<script type="text/javascript">
+			$(document).ready(function(){
+				const params = new URLSearchParams(window.location.search);
+				const sesssionID = params.get('sesssion')
+				
+				$.get("http://localhost/assesments/assesments-api/public/questions")
+				.done(function( data ) {
+					const questions = JSON.parse(data);
+					let rows = [];
+
+					for(attrib in questions){
+						const interestArea = questions[attrib].Interest_Area_Name;
+						const questionID = questions[attrib].questionId;
+						const questionText = questions[attrib].questionText;
+
+						let row = '<tr>';
+						row += `<td>${interestArea}</td>`;
+						row += `<td>${questionText}</td>`;
+						row += '<td>';
+						row += `<div class="form-check">
+										<label class="form-check-label">
+										<input type="radio" class="form-check-input rb-question-${questionID}" name="radio-question-${questionID}" value="1">1
+										</label>
+									</div>`;
+						row += `<div class="form-check">
+										<label class="form-check-label">
+										<input type="radio" class="form-check-input rb-question-${questionID}" name="radio-question-${questionID}" value="2">2
+										</label>
+									</div>`;
+						row += `<div class="form-check">
+										<label class="form-check-label">
+										<input type="radio" class="form-check-input rb-question-${questionID}" name="radio-question-${questionID}" value="3">3
+										</label>
+									</div>`;
+						row += `<div class="form-check">
+										<label class="form-check-label">
+										<input type="radio" class="form-check-input rb-question-${questionID}" name="radio-question-${questionID}" value="4">4
+										</label>
+									</div>`;
+						row += `<div class="form-check">
+										<label class="form-check-label">
+										<input type="radio" class="form-check-input rb-question-${questionID}" name="radio-question-${questionID}" value="5">5
+										</label>
+									</div>`;
+						row += '</td>';
+						row += '</tr>';
+
+						rows.push(row);
+					}
+					$("#assemnetTbl tbody").html(rows.toString());
+
+				})
+				.fail(function (jqXHR, textStatus, err) {
+						console.log(`A system error occurred while processing the request: ${err}`);
+				});
+
+				$.get(`http://localhost/assesments/assesments-api/public/score/${sesssionID}`)
+				.done(function( data ){
+					const questions = JSON.parse(data);
+					let rows = [];
+
+					for(attrib in questions){
+						const interestArea = questions[attrib].Interest_Area_Name;
+						const score = questions[attrib].Score;
+						const questionText = questions[attrib].questionText;
+
+						let row = '<tr>';
+						row += `<td>${interestArea}</td>`;
+						row += `<td>${questionText}</td>`;
+						row += `<td>${score}</td>`;
+						row += '</tr>';
+
+						rows.push(row);
+					}
+					console.log(questions);
+					console.log(rows);
+					$("#scoreID tbody").html(rows.toString());
+				})
+				.fail(function (jqXHR, textStatus, err) {
+						console.log(`A system error occurred while processing the request: ${err}`);
+				});
+
+				// use delegated event handler
+				// to pick up the dynamically
+				// generated radio buttons
+				$("#assemnetTbl").on('click',"input[name ^= 'radio-question-']",function(){
+					const count = $("input[name ^= 'radio-question-']").filter(":checked").length;
+
+					console.log("num selected:",count);
+
+					// check if all
+					// questions have
+					// an answer
+					if(count === 112){
+						$("button").fadeIn();
+					}
+					else{
+						$("button").fadeOut();
+					}
+				});
+
+				// too lazy to select all of the options :)
+				// $("#testbtn").on('click',function(){
+				// 	$("input[name ^= 'radio-question-']")
+				// 	.filter("[value = 1]")
+				// 	.prop("checked",true);
+
+				// 	$("button").fadeIn();
+				// });
+
+				// send data and
+				// re-populate
+				// score table
+				$("#submitbtn").on('click',function(){
+					let scores = [];
+
+					$("input[name ^= 'radio-question-']")
+					.filter(":checked")
+					.each(function(i){
+						let questionName = jQuery(this).prop('name');
+						const questionID = /radio-question-(\d+)/.exec(questionName)[1];
+						const score = jQuery(this).val();
+
+						scores.push({
+							ID: questionID,
+							Score: score
+						});
+					});
+
+					// console.log(scores);
+
+					const postData = {
+						'Assessment_Session_ID': sesssionID,
+						'Score_Data': scores
+					}
+
+					// send score data
+					$.post("http://localhost/assesments/assesments-api/public/update",postData)
+					.done(function(data){
+						// build results table
+						// console.log(data);
+
+						const questions = JSON.parse(data);
+						let rows = [];
+
+						for(attrib in questions){
+							const interestArea = questions[attrib].Interest_Area_Name;
+							const score = questions[attrib].Score;
+							const questionText = questions[attrib].questionText;
+
+							let row = '<tr>';
+							row += `<td>${interestArea}</td>`;
+							row += `<td>${questionText}</td>`;
+							row += `<td>${score}</td>`;
+							row += '</tr>';
+
+							rows.push(row);
+						}
+						$("#scoreID tbody").html(rows.toString());
+					})
+					.fail();
+				})
+			});
+		</script>
+	</body>
+</html>

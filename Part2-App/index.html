@@ -1,0 +1,50 @@
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+  </head>
+
+<body>
+	<div class="container">
+		<div class="row justify-content-center align-items-center" style="height:100vh">
+			<div class="col-4">
+				<div class="card">
+					<div class="card-body">
+						<form action="" autocomplete="off">
+							<div class="form-group">
+								<input type="text" class="form-control" name="username">
+							</div>
+							<div class="form-group">
+								<input type="password" class="form-control" name="password">
+							</div>
+							<button type="button" id="sendlogin" class="btn btn-primary">login</button>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript">
+		$("#sendlogin").on('click',function(){
+			const name = $("input[name='username']").val();
+			const pw = $("input[name='password']").val();
+
+			const endpoint = `http://localhost/assesments/assesments-api/public/auth/${name}/${pw}`;
+			console.log('endpoint',endpoint);
+
+			$.get(endpoint,function(data){
+				const sessionID = JSON.parse(data);
+
+				if(sessionID === null){
+					alert("Something went wrong please try again.");
+				}
+				else{
+					window.location.replace(`http://localhost/assesments/assesments.html?sesssion=${sessionID}`);
+				}
+			});
+		});
+	</script>
+</body>
